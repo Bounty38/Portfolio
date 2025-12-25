@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
+const repo = '/Portfolio';
+
 const nextConfig = {
+  basePath: repo,
+  assetPrefix: repo,
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
+  },
   webpack(config) {
     // Grab the existing rule that handles SVG imports
     const fileLoaderRule = config.module.rules.find((rule) =>
