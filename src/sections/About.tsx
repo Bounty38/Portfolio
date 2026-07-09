@@ -44,9 +44,10 @@ import smileMemoji from "@/assets/images/memoji-smile.png";
 import { CardHeader } from "@/components/CardHeader";
 import { ToolboxItems } from "@/components/ToolboxItems"; 
 import { motion } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
+import { useLanguage } from "@/i18n";
 
-const toolboxItems = [
+const toolboxItemsBase = [
   //{
   //  title: 'Azure Synapse',
   //  iconType: SynapseIcon,
@@ -126,7 +127,8 @@ const toolboxItems = [
   {
     title: 'Management',
     iconType: ManagementIcon,
-  },  
+    translateKey: 'management' as const,
+  },
   // {
   //   title: 'Neo4j',
   //   iconType: Neo4jIcon,
@@ -165,78 +167,33 @@ const toolboxItems = [
   },
 ]
 
-const hobbies = [
-  {
-    title: 'Piano',
-    emoji: '🎹',
-    left: '35%',
-    top: '40%',
-  },
-  {
-    title: 'Gaming',
-    emoji: '🎮',
-    left: '10%',
-    top: '35%',
-  },
-  {
-    title: 'Music',
-    emoji: '🎵',
-    left: '65%',
-    top: '42%',
-  },
-  {
-    title: 'Reading',
-    emoji: '📚',
-    left: '45%',
-    top: '70%',
-  },
-  {
-    title: 'Travel',
-    emoji: '✈️',
-    left: '77%',
-    top: '73%',
-  },
-  {
-    title: 'Stock market',
-    emoji: '📈',
-    left: '70%',
-    top: '15%',
-  }
-]
-
-const formations = [
-  {
-    title: 'Network Engineering - Bachelor\'s degree - Sheridan College (2024-2028)',
-    emoji: '🧑‍💻',
-    left: '5%',
-    top: '-10%',
-  },
-]
-
-const certifications = [
-  {
-    title: '<strong>Career Essentials in GitHub Professional Certificate (Feb 2025)</strong>',
-    emoji: '💻',
-    left: '5%',
-    top: '-10%',
-  },
-  {
-    title: 'Career Essentials in Software Development by Microsoft and LinkedIn (Feb 2025)',
-    emoji: '🌐',
-    left: '5%',
-    top: '25%',
-  },
-  {
-    title: 'English for the workplace, Language Assessment (Level C1-2) @ Oranim Academic College of Education (2021)',
-    emoji: '⭐',
-    left: '5%',
-    top: '55%',
-  },
-]
+const formationEmojis = ["🧑‍💻"];
+const certificationEmojis = ["💻", "🌐", "⭐"];
 
 export const AboutSection = () => {
+  const { t, locale } = useLanguage();
   const constraintRef = useRef(null);
   const hobbiesRef = useRef<HTMLDivElement | null>(null);
+
+  const toolboxItems = useMemo(
+    () =>
+      toolboxItemsBase.map((item) =>
+        "translateKey" in item && item.translateKey === "management"
+          ? { ...item, title: t.about.management }
+          : item
+      ),
+    [t.about.management]
+  );
+
+  const hobbies = t.about.hobbies;
+  const formations = t.about.formations.map((title, index) => ({
+    title,
+    emoji: formationEmojis[index] ?? "🧑‍💻",
+  }));
+  const certifications = t.about.certifications.map((title, index) => ({
+    title,
+    emoji: certificationEmojis[index] ?? "⭐",
+  }));
 
   const TILE_W = 160; // px
   const TILE_H = 44; // px
@@ -268,7 +225,7 @@ export const AboutSection = () => {
     computeInitial();
     window.addEventListener("resize", computeInitial);
     return () => window.removeEventListener("resize", computeInitial);
-  }, []);
+  }, [hobbies, locale]);
 
   const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
 
@@ -322,25 +279,25 @@ export const AboutSection = () => {
     <div id="about" className="py-20 lg:py-28">
       <div className="container">
         <SectionHeader 
-          eyebrow="About Me" 
-          title="A Glimpse Into My World" 
-          description="Learn more about who I am, what I do, and what inspires me."
+          eyebrow={t.about.eyebrow} 
+          title={t.about.title} 
+          description={t.about.description}
         />
         <div className="mt-20 flex flex-col gap-8">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-5 lg:grid-cols-3">
             <Card className="md:col-span-2 lg:col-span-1">
               <CardHeader 
-                title="My reads" 
-                description="Discover the book I'm immersed in right now." 
+                title={t.about.readsTitle} 
+                description={t.about.readsDescription} 
               />
               <div className="w-40 mx-auto mt-2 md:mt-0 mb-6">
-                <Image src={bookImage} alt="Book cover" className="w-40 h-auto object-contain" />
+                <Image src={bookImage} alt={t.about.bookAlt} className="w-40 h-auto object-contain" />
               </div>
             </Card>
             <Card className="md:col-span-3 lg:col-span-2">
               <CardHeader 
-                title="My Toolbox" 
-                description="Explore the technologies and tools I use to craft exceptional digital experiences." 
+                title={t.about.toolboxTitle} 
+                description={t.about.toolboxDescription} 
                 className=""
               />
               <ToolboxItems items={toolboxItems} className="" itemsWrapperClassName="animate-move-left [animation-duration:40s]" />
@@ -353,8 +310,8 @@ export const AboutSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-4 gap-8"> 
             <Card className="p-0 flex flex-col md:col-span-3 lg:col-span-2 overflow-visible">
               <CardHeader 
-                title="Education" 
-                description="Have a look at my academic background."
+                title={t.about.educationTitle} 
+                description={t.about.educationDescription}
                 className="px-6 py-6" 
               />
               <div>
@@ -370,8 +327,8 @@ export const AboutSection = () => {
             </Card>
             <Card className="p-0 flex flex-col md:col-span-3 lg:col-span-2 overflow-visible">
               <CardHeader 
-                title="Certifications" 
-                description="Check out the certifications I've earned."
+                title={t.about.certificationsTitle} 
+                description={t.about.certificationsDescription}
                 className="px-6 py-6" 
               />
               <div>
@@ -390,8 +347,8 @@ export const AboutSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-3 gap-8"> 
             <Card className="p-0 flex flex-col md:col-span-3 lg:col-span-2">
               <CardHeader 
-                title="Beyond the Code" 
-                description="Explore my interests and hobbies beyond the digital realm."
+                title={t.about.beyondTitle} 
+                description={t.about.beyondDescription}
                 className="px-6 py-6" 
               />
               <div className="relative flex-1" ref={constraintRef}>
@@ -412,12 +369,12 @@ export const AboutSection = () => {
             </Card>
             <Card className="p-0 relative md:col-span-2 lg:col-span-1">
               <div className="w-full">
-                <Image src={mapImage} alt="map" className="w-full object-cover object-left-top"/>
+                <Image src={mapImage} alt={t.about.mapAlt} className="w-full object-cover object-left-top"/>
               </div>
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-20 rounded-full  after:content-[''] after:absolute after:inset-0 after:outline after:outline-2 after:-outline-offset-2 after:rounded-full after:outline-gray-950/30">
                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-300 to-sky-400 -z-20 animate-ping [animation-duration:2s]"></div>
                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-300 to-sky-400 -z-10"></div>
-                <Image src={smileMemoji} alt="smiling memoji" className="size-20" />
+                <Image src={smileMemoji} alt={t.about.memojiAlt} className="size-20" />
               </div>
             </Card>
           </div>

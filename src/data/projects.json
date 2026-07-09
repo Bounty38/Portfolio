@@ -1,0 +1,34 @@
+[
+  {
+    "id": "survivor-tool",
+    "link": "https://bounty.best",
+    "cta": "live",
+    "liveUrl": "https://bounty.best"
+  },
+  {
+    "id": "stellar-burgers",
+    "link": "https://github.com/Bounty38/stellar-burgers",
+    "cta": "github"
+  },
+  {
+    "id": "blog-customizer",
+    "link": "https://github.com/Bounty38/blog-customizer",
+    "cta": "github"
+  },
+  {
+    "id": "weblarek",
+    "link": "https://github.com/Bounty38/weblarek",
+    "cta": "github"
+  },
+  {
+    "id": "portfolio",
+    "link": "https://github.com/Bounty38/Portfolio",
+    "cta": "github"
+  },
+  {
+    "id": "zakrivayuschiy-teg",
+    "link": "https://bounty38.github.io/zakrivayuschiy-teg-f",
+    "cta": "live",
+    "liveUrl": "https://bounty38.github.io/zakrivayuschiy-teg-f"
+  }
+]

@@ -4,10 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "predev": "npm run sync:cv",
     "build": "next build",
     "build:export": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:projects": "node scripts/check-projects-content.mjs",
+    "sync:cv": "node scripts/sync-cv.mjs",
+    "snapshots": "node scripts/capture-project-previews.mjs",
+    "prebuild": "npm run sync:cv"
   },
   "dependencies": {
     "@svgr/webpack": "^8.1.0",
@@ -24,6 +29,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
+    "playwright": "^1.52.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"

@@ -49,6 +49,15 @@ dist/
 .turbo/
 .vite/
 
+# generated at build — sources live in src/assets and src/data
+/public/cv/*.pdf
+/public/project-previews/
+
+# playwright (local / CI artifacts)
+/playwright-report/
+/test-results/
+/blob-report/
+
 # other
 Thumbs.db
 .vscode-test/
