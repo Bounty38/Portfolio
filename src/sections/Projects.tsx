@@ -6,10 +6,10 @@ import ArrowUpRightIcon from "@/assets/icons/arrow-up-right.svg";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Card } from "@/components/Card";
 import { useLanguage } from "@/i18n";
-import { projectMetaById, projectPreviewSrc } from "@/data/projects";
+import { projectMetaById, projectPreviewPath } from "@/data/projects";
 
 export const ProjectsSection = () => {
-  const { t } = useLanguage();
+  const { locale, t } = useLanguage();
 
   return (
     <section id="projects" className="pb-16 lg:py-24">
@@ -70,7 +70,7 @@ export const ProjectsSection = () => {
                   </div>
                   <div className="relative shrink-0 w-full mt-4 aspect-[16/10] lg:mt-0 lg:self-center overflow-hidden rounded-xl lg:max-w-[320px] lg:ml-auto">
                     <Image
-                      src={projectPreviewSrc(project.id)}
+                      src={projectPreviewPath(project.id, locale)}
                       alt={project.title}
                       fill
                       className="object-cover object-top"

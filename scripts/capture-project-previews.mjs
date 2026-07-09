@@ -1,4 +1,11 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -7,6 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const projectsPath = join(root, "src/data/projects.json");
 const outDir = join(root, "public/project-previews");
+const LOCALES = ["en", "ru"];
 
 const projects = JSON.parse(readFileSync(projectsPath, "utf8"));
 
@@ -22,27 +30,12 @@ function parseGithubRepo(link) {
   };
 }
 
-async function captureLiveUrl(browser, url, outPath) {
-  const page = await browser.newPage({
-    viewport: { width: 1280, height: 800 },
-  });
-
-  try {
-    await page.goto(url, { waitUntil: "networkidle", timeout: 60_000 });
-    await page.screenshot({ path: outPath, fullPage: false });
-  } finally {
-    await page.close();
-  }
-}
-
 async function fetchImageWithRetries(imageUrl, label) {
   const maxAttempts = 6;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const response = await fetch(imageUrl, {
-      headers: {
-        "User-Agent": "portfolio-snapshot-script",
-      },
+      headers: { "User-Agent": "portfolio-snapshot-script" },
     });
 
     if (response.ok) {
@@ -62,58 +55,110 @@ async function fetchImageWithRetries(imageUrl, label) {
   throw new Error(`Image fetch failed for ${label}`);
 }
 
-async function resolveGithubOgUrl(owner, repo) {
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "portfolio-snapshot-script",
-    },
-  });
-
-  if (response.ok) {
-    const data = await response.json();
-    if (typeof data.social_preview_image_url === "string") {
-      return data.social_preview_image_url;
-    }
-  }
-
-  return `https://opengraph.githubassets.com/1/${owner}/${repo}`;
+async function captureGithubOg(owner, repo, outPath) {
+  const url = `https://opengraph.githubassets.com/${Date.now()}/${owner}/${repo}`;
+  const buffer = await fetchImageWithRetries(url, `${owner}/${repo}`);
+  writeFileSync(outPath, buffer);
 }
 
-async function captureGithubOg(owner, repo, outPath) {
-  const imageUrl = await resolveGithubOgUrl(owner, repo);
-  const buffer = await fetchImageWithRetries(imageUrl, `${owner}/${repo}`);
-  writeFileSync(outPath, buffer);
+async function captureScreenshot(browser, { url, storage }, outPath) {
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 800 },
+  });
+
+  try {
+    if (storage) {
+      await page.addInitScript(
+        ({ key, value }) => {
+          localStorage.setItem(key, value);
+        },
+        { key: storage.key, value: storage.value }
+      );
+    }
+
+    await page.goto(url, { waitUntil: "networkidle", timeout: 60_000 });
+    await page.screenshot({ path: outPath, fullPage: false });
+  } finally {
+    await page.close();
+  }
 }
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function captureProject(browser, project) {
+  const captured = [];
+
+  // Live site with i18n: capture per locale
+  if (project.liveUrl && project.i18n) {
+    for (const locale of LOCALES) {
+      const localeConfig = project.i18n[locale];
+      if (!localeConfig) {
+        throw new Error(`Missing i18n config for locale: ${locale}`);
+      }
+
+      const url = localeConfig.url ?? project.liveUrl;
+      const outPath = join(outDir, `${project.id}-${locale}.png`);
+
+      await captureScreenshot(
+        browser,
+        { url, storage: localeConfig.storage },
+        outPath
+      );
+      captured.push(`${project.id}-${locale}.png (${url})`);
+      await delay(1000);
+    }
+
+    return captured;
+  }
+
+  // Live site without i18n: capture once and copy for other locales
+  if (project.liveUrl) {
+    const outPath = join(outDir, `${project.id}-en.png`);
+    await captureScreenshot(browser, { url: project.liveUrl }, outPath);
+
+    for (const locale of LOCALES.slice(1)) {
+      copyFileSync(outPath, join(outDir, `${project.id}-${locale}.png`));
+    }
+
+    captured.push(`${project.id}-en.png (${project.liveUrl})`);
+    captured.push(`${project.id}-ru.png (copy)`);
+    return captured;
+  }
+
+  // No live site: keep GitHub OG banners (download once and copy)
+  const github = parseGithubRepo(project.link);
+  if (!github) {
+    throw new Error(`Cannot parse GitHub URL: ${project.link}`);
+  }
+
+  const outPath = join(outDir, `${project.id}-en.png`);
+  await captureGithubOg(github.owner, github.repo, outPath);
+  copyFileSync(outPath, join(outDir, `${project.id}-ru.png`));
+  captured.push(`${project.id}-en.png (github-og ${github.owner}/${github.repo})`);
+  captured.push(`${project.id}-ru.png (copy)`);
+  return captured;
+}
+
 async function main() {
   mkdirSync(outDir, { recursive: true });
+
+  for (const file of readdirSync(outDir)) {
+    if (/\.png$/.test(file)) {
+      unlinkSync(join(outDir, file));
+    }
+  }
 
   const browser = await chromium.launch();
   const errors = [];
 
   for (const project of projects) {
-    const outPath = join(outDir, `${project.id}.png`);
-
     try {
-      if (project.liveUrl) {
-        await captureLiveUrl(browser, project.liveUrl, outPath);
-        console.log(`Screenshot captured: ${project.id}`);
-        continue;
+      const captured = await captureProject(browser, project);
+      for (const entry of captured) {
+        console.log(`Screenshot captured: ${entry}`);
       }
-
-      const github = parseGithubRepo(project.link);
-      if (!github) {
-        throw new Error(`Cannot parse GitHub URL: ${project.link}`);
-      }
-
-      await captureGithubOg(github.owner, github.repo, outPath);
-      console.log(`OG image saved: ${project.id}`);
-      await delay(2000);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       errors.push({ id: project.id, message });
@@ -127,7 +172,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Captured ${projects.length} project previews.`);
+  console.log(`Captured previews for ${projects.length} projects.`);
 }
 
 main();

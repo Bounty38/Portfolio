@@ -3,7 +3,11 @@
     "id": "survivor-tool",
     "link": "https://bounty.best",
     "cta": "live",
-    "liveUrl": "https://bounty.best"
+    "liveUrl": "https://bounty.best",
+    "i18n": {
+      "en": { "url": "https://bounty.best/panel/login?lang=en" },
+      "ru": { "url": "https://bounty.best/panel/login?lang=ru" }
+    }
   },
   {
     "id": "stellar-burgers",
@@ -23,7 +27,16 @@
   {
     "id": "portfolio",
     "link": "https://github.com/Bounty38/Portfolio",
-    "cta": "github"
+    "cta": "github",
+    "liveUrl": "https://bounty38.github.io/Portfolio/",
+    "i18n": {
+      "en": {
+        "storage": { "key": "portfolio-locale", "value": "en" }
+      },
+      "ru": {
+        "storage": { "key": "portfolio-locale", "value": "ru" }
+      }
+    }
   },
   {
     "id": "zakrivayuschiy-teg",

@@ -19,7 +19,13 @@ const requiredInProjects = [
   '"link": "https://github.com/Bounty38/Portfolio"',
   '"link": "https://bounty38.github.io/zakrivayuschiy-teg-f"',
   '"liveUrl": "https://bounty.best"',
+  '"liveUrl": "https://bounty38.github.io/Portfolio/"',
   '"liveUrl": "https://bounty38.github.io/zakrivayuschiy-teg-f"',
+  '"url": "https://bounty.best/panel/login?lang=en"',
+  '"url": "https://bounty.best/panel/login?lang=ru"',
+  '"key": "portfolio-locale"',
+  '"value": "en"',
+  '"value": "ru"',
 ];
 
 const requiredInEn = [

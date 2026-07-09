@@ -57,6 +57,7 @@ dist/
 /playwright-report/
 /test-results/
 /blob-report/
+temp/
 
 # other
 Thumbs.db

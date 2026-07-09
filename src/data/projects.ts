@@ -1,11 +1,22 @@
 import raw from "./projects.json";
+import type { Locale } from "@/i18n/types";
+
+export type LocaleSnapshot = {
+  url?: string;
+  storage?: {
+    key: string;
+    value: string;
+  };
+};
 
 export type ProjectMeta = {
   id: string;
   link: string;
   cta: "live" | "github";
-  /** When set, build captures a Playwright screenshot. Otherwise GitHub OG is used. */
+  /** Base URL for Playwright when no per-locale URL is set. */
   liveUrl?: string;
+  /** Per-locale capture settings for sites with i18n. */
+  i18n?: Partial<Record<Locale, LocaleSnapshot>>;
 };
 
 export const projects = raw as ProjectMeta[];
@@ -14,6 +25,4 @@ export const projectMetaById: Record<string, ProjectMeta> = Object.fromEntries(
   projects.map((project) => [project.id, project])
 );
 
-export function projectPreviewSrc(id: string) {
-  return `/project-previews/${id}.png`;
-}
+export { projectPreviewPath } from "@/lib/paths";
